@@ -1,0 +1,64 @@
+#!/bin/bash
+####################################
+#
+# Backup script with
+# grandfather-father-son rotation
+# of each home directory within
+# it’s own archive
+#
+# Modified By: Dan Walker
+# Merval.Org
+####################################
+
+# Where to backup to.
+dest=”/backup/users”
+
+# Setup variables for the archive filename.
+day=$(date +%A)
+#folder=$(backup)
+
+# Find which week of the month 1-4 it is.
+day_num=$(date +%d)
+if (( $day_num week_file=”-week1.tgz”
+elif (( $day_num > 7 && $day_num week_file=”-week2.tgz”
+elif (( $day_num > 14 && $day_num week_file=”-week3.tgz”
+elif (( $day_num > 21 && $day_num < 32 )); then
+week_file=”-week4.tgz”
+fi
+
+# Find if the Month is odd or even.
+month_num=$(date +%m)
+month=$(expr $month_num % 2)
+if [ $month -eq 0 ]; then
+month_file=”-month2.tgz”
+else
+month_file=”-month1.tgz”
+fi
+
+# Create archive filename.
+if [ $day_num == 1 ]; then
+archive_file=$month_file
+elif [ $day != “Saturday” ]; then
+archive_file=”-$day.tgz”
+else
+archive_file=$week_file
+fi
+
+# Print start status message.
+echo “Backing up This may take a few minutes.”
+
+# Backup the files using tar.
+for folder in $(ls /home); do
+sudo -u $folder tar czf “$dest/$folder$archive_file” /home/”$folder”
+
+# Print end status message.
+echo
+echo “Backup $folder complete.”
+#date
+done
+
+# Long listing of files in $dest to check file sizes.
+ls -lh $dest/
+echo
+echo “Backup is complete”
+exit

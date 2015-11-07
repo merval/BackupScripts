@@ -1,0 +1,67 @@
+#!/bin/bash
+####################################
+#
+# Backup script with
+# grandfather-father-son rotation
+# of all your SQL Databases.
+#
+# Written/Modified By: Dan Walker
+# Merval.Org
+####################################
+
+# Where to backup to.
+dest=”/backup/sql-backup”
+
+# Setup variables for the archive filename.
+day=$(date +%A)
+
+# Find which week of the month 1-4 it is.
+day_num=$(date +%d)
+if (( $day_num week_file=”-week1.sql.tgz”
+elif (( $day_num > 7 && $day_num week_file=”-week2.sql.tgz”
+elif (( $day_num > 14 && $day_num week_file=”-week3.sql.tgz”
+elif (( $day_num > 21 && $day_num < 32 )); then
+week_file=”-week4.sql.tgz”
+fi
+
+# Find if the Month is odd or even.
+month_num=$(date +%m)
+month=$(expr $month_num % 2)
+if [ $month -eq 0 ]; then
+month_file=”-month2.sql.tgz”
+else
+month_file=”-month1.sql.tgz”
+fi
+
+# Create archive filename.
+if [ $day_num == 1 ]; then
+archive_file=$month_file
+elif [ $day != “Saturday” ]; then
+archive_file=”-$day.sql.tgz”
+else
+archive_file=$week_file
+fi
+
+# Backup the files.
+MYSQL=’/usr/bin/mysql’
+
+MYSQLDUMP=’/usr/bin/mysqldump’
+DUMPOPTS=’–opt –hex-blob –skip-extended-insert’
+
+user=”CHANGEME”
+pass=”CHANGEME”
+# Get the names of the database tables
+databases=`$MYSQL -u$user -p$pass –skip-column-names -e’SHOW DATABASES’`
+
+# Write the compressed dump for each table
+for db in $databases; do
+filename=`date +”$dest/$db$archive_file”`
+echo “creating $filename”
+$MYSQLDUMP $DUMPOPTS -u$user -p$pass –database $db \
+| gzip -9 > $filename
+
+done
+
+echo “Backup of SQL Datases Complete”
+exit
+

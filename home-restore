@@ -1,0 +1,75 @@
+#!/bin/bash
+##############################
+#
+# Script written by Dan Walker
+# for Merval.Org to
+# restore a specific file
+# from a specific backup.
+#
+##############################
+
+# Specify Backup Directory
+echo -n “Where are we restoring from? (default is /backup/users): ”
+while read -e inputline
+do
+backup_path=”$inputline”
+# Display what user typed
+if [ -z “${backup_path}” ]
+then
+echo “You didn’t type anything”
+backup_path=”/backup/users”
+echo “Using $backup_path”
+else
+
+if [ -n “${backup_path}” ]
+then
+backup_path=”$inputline”
+echo “Using custom location: $backup_path”
+fi
+fi
+
+# Lets ask what user to restore
+echo -n “Which user?: ”
+read -e user
+
+echo -n “What are we restoring? (leave out /home/): ”
+read -e source
+
+# Now lets figure out what backup to restore
+echo -n “Which backup? (Daily, Weekly or Monthly): ”
+read -e choice
+if [ $choice = “Daily” ];
+then
+echo -n “Which day? (Sunday – Friday): ”
+read -e date
+echo “You chose $date”
+echo “Starting restore process. This may take a moment”
+cd $backup_path
+sudo -u $user tar -xzf $user-$date.tgz -C / home/$user/$source
+echo “Restored /home/$user/$source from the $date backup”
+fi
+
+if [ $choice = “Weekly” ];
+then
+echo -n “Which week? (1-4): ”
+read -e week
+echo “You chose to restore to $week(s) ago”
+echo “Starting restore process. This may take a moment”
+cd $backup_path
+sudo -u $user tar -xzf $user-week$week.tgz -C / home/$user/$source
+echo “Restored /home/$user/$source to the back from $week week(s) ago”
+fi
+
+if [ $choice = “Monthly” ]
+then
+echo -n “Which Month? (1 or 2): ”
+read -e month
+echo “You chose to restore to $month(s) ago”
+echo “Starting restore process. This may take a moment.”
+cd $backup_path
+sudo -u $user tar -xzf $user-month$month.tgz -C / home/$user/$source
+echo “Restored /home/$user/$source from $month month(s) ago”
+fi
+
+exit
+done
